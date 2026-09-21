@@ -9,6 +9,19 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Fixed
+
+- Marketplace calls now authenticate when a token is available, resolving
+  `GH_TOKEN`, then `GITHUB_TOKEN`, then `gh auth token`. Anonymous search is
+  capped at 10 requests/hour per IP, which the marketplace exhausted quickly;
+  an authenticated call gets 30 requests/minute. Set `HERDR_PM_NO_TOKEN=1` to
+  force anonymous calls.
+- The marketplace page timeout is 20s instead of 8s. A 50-item page is roughly
+  330KB and the old cap flaked mid-download on a slow link.
+- A failed marketplace fetch reports the real reason (HTTP status and GitHub's
+  own message, or a timeout or connection failure) instead of one generic
+  "offline or rate limit" line.
+
 ## [0.4.1] — 2026-09-18
 
 ### Fixed
