@@ -950,11 +950,13 @@ split_mrow() {
   [[ "$m_name" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?$ ]] || m_name=""
 }
 
-# Bearer token for api.github.com, resolved once. Anonymous search is limited to
-# 10 requests/hour per IP, which the marketplace burns through fast; an
-# authenticated call gets 30/minute. The herdr server's env usually lacks
-# GH_TOKEN, so fall back to the gh CLI's stored credential when it is installed.
-# Set HERDR_PM_NO_TOKEN=1 to force anonymous calls.
+# Bearer token for api.github.com, resolved once. Anonymous search allows 10
+# requests/minute per IP; authenticated allows 30. The marketplace itself stays
+# well inside the anonymous budget (one request per visited page), but the
+# token also makes calls attributable and gives headroom for repeat fetches.
+# The herdr server's env usually lacks GH_TOKEN, so fall back to the gh CLI's
+# stored credential when it is installed. Set HERDR_PM_NO_TOKEN=1 to force
+# anonymous calls.
 github_token=""
 resolve_github_token() {
   github_token=""
@@ -1029,9 +1031,9 @@ fetch_market_page() {
   buf=""
   put '\n  %bfetching…%b\n' "$dim" "$reset"
   draw_flush
-  # The 50-item page is ~330KB; 8s flakes mid-download on a slow link, so allow
-  # 20s. -o keeps a partial body out of $json, and rc distinguishes a timeout
-  # from a real HTTP error for the message below.
+  # The 50-item page is ~330KB; 8s flaked mid-download on a slow link in
+  # testing, so allow 20s. -o keeps a partial body out of $json, and rc
+  # distinguishes a timeout from a real HTTP error for the message below.
   status="$(curl -sS --max-time 20 -o "$tmpdir/market.json" -w '%{http_code}' \
     -H 'Accept: application/vnd.github+json' "${auth[@]+"${auth[@]}"}" "$(market_url "$page")" 2>/dev/null)"
   rc=$?
